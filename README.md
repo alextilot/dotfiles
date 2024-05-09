@@ -55,3 +55,9 @@ Setup and Sync for shell and dotfiles
       1. NVM
       2. Node.js
 6. Visual Studio Code
+7. NeoVim setup:
+   1. Follow direction from [nvim repo](https://github.com/alextilot/kickstart.nvim)
+   2. Install [Tmux Plugin Manger](https://github.com/tmux-plugins/tpm)
+   3. ```shell 
+      git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+      ```
