@@ -31,7 +31,16 @@ export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
-export TERM="screen-256color" # use more colors
+export COLORTERM=truecolor
+export TERM='xterm-256color'
+
+# Preferred editor for local and remote sessions
+if [[ -n $SSH_CONNECTION ]]; then
+  export EDITOR='nvim'
+else
+  export EDITOR='nvim'
+fi
+export VISUAL='nvim'
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -125,12 +134,6 @@ setopt TRANSIENT_RPROMPT
 # bug with oh-my-zsh will output each command without this https://stackoverflow.com/a/41620534
 DISABLE_AUTO_TITLE="true"
 
-# Preferred editor for local and remote sessions
-if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='code'
-else
-  export EDITOR='code'
-fi
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -154,3 +157,6 @@ done
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# To customize prompt, run `p10k configure` or edit ~/.dotfiles/.p10k.zsh.
+[[ ! -f ~/.dotfiles/.p10k.zsh ]] || source ~/.dotfiles/.p10k.zsh
