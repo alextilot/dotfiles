@@ -1,1 +1,1 @@
-alias zshconfig="code ~/.dotfiles/.zshrc"
+alias zshconfig="nvim ~/.dotfiles/.zshrc"
