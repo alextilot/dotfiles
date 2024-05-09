@@ -10,3 +10,6 @@ ln -s ${BASEDIR}/.aliases.zsh ~/.aliases.zsh
 
 # git
 ln -s ${BASEDIR}/.gitconfig ~/.gitconfig
+
+# tmux
+ln -s ${BASEDIR}/.tmux.conf ~/.tmux.conf
