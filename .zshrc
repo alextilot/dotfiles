@@ -32,7 +32,7 @@ export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 export COLORTERM=truecolor
-export TERM=xterm-256color
+#export TERM=xterm-256color
 
 # Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
