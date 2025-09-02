@@ -1,0 +1,13 @@
+[includeIf "gitdir:~/work/"]
+    path = ~/.gitconfig-work
+[includeIf "gitdir:~/personal/"]
+    path = ~/.gitconfig-personal
+[core]
+	editor = code --wait
+	autocrlf = input
+[push]
+	default = current
+[fetch]
+	prune = true
+[pull]
+	rebase = true

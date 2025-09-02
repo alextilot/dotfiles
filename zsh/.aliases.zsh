@@ -1,0 +1,1 @@
+alias zshconfig="nvim ~/.zshrc"

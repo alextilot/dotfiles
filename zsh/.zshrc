@@ -5,19 +5,19 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# WSL configurations
-if [ -n $(uname -r | grep 'Microsoft') ];
-then # wsl-specific
-	LS_COLORS="ow=01;36;40" && export LS_COLORS
-	export PATH=$PATH:/home/linuxbrew/.linuxbrew/bin
+# # WSL configurations
+# if [ -n $(uname -r | grep 'Microsoft') ];
+# then # wsl-specific
+# 	LS_COLORS="ow=01;36;40" && export LS_COLORS
+# 	export PATH=$PATH:/home/linuxbrew/.linuxbrew/bin
 
-        # tell terminal about CWD
-        keep_current_path() {
-                printf "\e]9;9;%s\e\\" "$(wslpath -w "$PWD")"
-        }
-        precmd_functions+=(keep_current_path)
-else # mac-specific
-fi
+#         # tell terminal about CWD
+#         keep_current_path() {
+#                 printf "\e]9;9;%s\e\\" "$(wslpath -w "$PWD")"
+#         }
+#         precmd_functions+=(keep_current_path)
+# else # mac-specific
+# fi
 
 # PATH changes
 export NVM_DIR="$HOME/.nvm"
@@ -112,6 +112,10 @@ export VISUAL='nvim'
 # plugins=(git)
 # source $ZSH/oh-my-zsh.sh
 
+# Initialize Zsh completion system to enable autocompletion and compdef functionality
+autoload -Uz compinit
+compinit
+
 source ~/.antidote/antidote.zsh
 antidote load
 autoload -Uz promptinit && promptinit && prompt powerlevel10k
@@ -156,5 +160,5 @@ for file in $HOME/dotfiles/zsh_local/*(N); do
 done
 
 
-# To customize prompt, run `p10k configure` or edit ~/.dotfiles/.p10k.zsh.
-[[ ! -f ~/.dotfiles/.p10k.zsh ]] || source ~/.dotfiles/.p10k.zsh
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

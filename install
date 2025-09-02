@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Install script for dotfiles using stow
+# This script will stow all the configuration directories
+
+set -e  # Exit on any error
+
+# Set default values if environment variables are not set
+DOTFILES="${DOTFILES:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+STOW_FOLDERS="${STOW_FOLDERS:-git,zsh,tmux,nvim}"
+
+echo "Installing dotfiles from: $DOTFILES"
+echo "Stowing folders: $STOW_FOLDERS"
+
+# Change to dotfiles directory
+pushd "$DOTFILES" > /dev/null
+
+# Convert comma-separated string to array
+IFS=',' read -ra folders <<< "$STOW_FOLDERS"
+
+# Stow each folder
+for folder in "${folders[@]}"; do
+    # Remove leading/trailing whitespace
+    folder=$(echo "$folder" | xargs)
+    
+    if [ -d "$folder" ]; then
+        echo "Stowing $folder..."
+        stow -D "$folder" 2>/dev/null || true  # Remove existing symlinks, ignore errors
+        stow "$folder"
+        echo "✓ $folder stowed successfully"
+    else
+        echo "⚠ Warning: Directory '$folder' not found, skipping..."
+    fi
+done
+
+popd > /dev/null
+
+echo "🎉 Dotfiles installation complete!"
