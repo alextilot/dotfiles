@@ -5,29 +5,13 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# # WSL configurations
-# if [ -n $(uname -r | grep 'Microsoft') ];
-# then # wsl-specific
-# 	LS_COLORS="ow=01;36;40" && export LS_COLORS
-# 	export PATH=$PATH:/home/linuxbrew/.linuxbrew/bin
+# Load device-specific settings
+setopt localoptions null_glob
+for file in "$HOME/.dotfiles/zsh/"*.local.zsh; do
+  source "$file"
+done
+unsetopt null_glob
 
-#         # tell terminal about CWD
-#         keep_current_path() {
-#                 printf "\e]9;9;%s\e\\" "$(wslpath -w "$PWD")"
-#         }
-#         precmd_functions+=(keep_current_path)
-# else # mac-specific
-# fi
-
-# PATH changes
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-#Path for go downloads
-# export GOPATH=$HOME/go
-# export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
-export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -151,14 +135,6 @@ DISABLE_AUTO_TITLE="true"
 precmd(){
   source ~/.aliases.zsh
 }
-
-# load scripts specific to device
-for file in $HOME/dotfiles/zsh_local/*(N); do
-        if [[ "$file" != *".gitignore" ]]; then
-                source "$file"
-        fi
-done
-
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
