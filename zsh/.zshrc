@@ -6,11 +6,9 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 # Load device-specific settings
-setopt localoptions null_glob
 for file in "$HOME/.dotfiles/zsh/"*.local.zsh; do
   source "$file"
 done
-unsetopt null_glob
 
 
 # Path to your oh-my-zsh installation.
