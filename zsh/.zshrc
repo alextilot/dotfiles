@@ -117,6 +117,8 @@ setopt GLOB_DOTS
 # remove right aligned portion of prompt after executing command - enables clean copy/pasting
 setopt TRANSIENT_RPROMPT
 
+setopt AUTO_CD
+
 # bug with oh-my-zsh will output each command without this https://stackoverflow.com/a/41620534
 DISABLE_AUTO_TITLE="true"
 
