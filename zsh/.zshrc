@@ -24,12 +24,7 @@ export ZSH="$HOME/.oh-my-zsh"
 export COLORTERM=truecolor
 #export TERM=xterm-256color
 
-# Preferred editor for local and remote sessions
-if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='nvim'
-else
-  export EDITOR='nvim'
-fi
+export EDITOR='nvim'
 export VISUAL='nvim'
 
 # Set name of the theme to load --- if set to "random", it will
