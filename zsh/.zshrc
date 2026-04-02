@@ -5,10 +5,18 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Load device-specific settings
-for file in "$HOME/.dotfiles/zsh/"*.local.zsh; do
-  source "$file"
-done
+# Per-machine config (gitignored via repo root `*.local.*`). OS-specific so Linux
+# never sources macOS paths; use ${DOTFILES} if dotfiles live outside ~/.dotfiles.
+_zsh_local_dir="${DOTFILES:-$HOME/.dotfiles}/zsh"
+case "$(uname -s)" in
+  Darwin)
+    [[ -f "$_zsh_local_dir/darwin.local.zsh" ]] && source "$_zsh_local_dir/darwin.local.zsh"
+    ;;
+  Linux)
+    [[ -f "$_zsh_local_dir/linux.local.zsh" ]] && source "$_zsh_local_dir/linux.local.zsh"
+    ;;
+esac
+unset _zsh_local_dir
 
 
 # Path to your oh-my-zsh installation.
@@ -129,10 +137,8 @@ DISABLE_AUTO_TITLE="true"
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
 #
-# Example aliases
-precmd(){
-  source ~/.aliases.zsh
-}
+# Example aliases — source once at startup (not in precmd; that re-ran every prompt)
+[[ -f ~/.aliases.zsh ]] && source ~/.aliases.zsh
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh

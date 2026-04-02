@@ -3,7 +3,6 @@
 # comments are supported like this
 Aloxaf/fzf-tab
 rupa/z
-zsh-users/zsh-completions
 
 # empty lines are skipped
 
@@ -13,10 +12,13 @@ olets/zsh-abbr    kind:defer
 
 # frameworks like oh-my-zsh are supported
 ohmyzsh/ohmyzsh path:lib
-ohmyzsh/ohmyzsh path:plugins/git
 ohmyzsh/ohmyzsh path:plugins/colored-man-pages
 ohmyzsh/ohmyzsh path:plugins/magic-enter
 ohmyzsh/ohmyzsh path:plugins/tmux
+ohmyzsh/ohmyzsh path:plugins/git
+ohmyzsh/ohmyzsh path:plugins/gcloud
+ohmyzsh/ohmyzsh path:plugins/python
+ohmyzsh/ohmyzsh path:plugins/npm
 
 # or lighter-weight ones like zsh-utils
 belak/zsh-utils path:editor
