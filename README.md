@@ -12,10 +12,11 @@ Personal configuration files and setup scripts for a modern development environm
 
 2. **Install dependencies**:
    ```bash
-   # Install stow (required for symlinking)
-   brew install stow  # macOS
+   # Install Homebrew first on macOS, then run install script.
+   # The install script auto-installs required packages (including stow + fzf).
+   brew install stow  # optional preinstall if you prefer
    # or
-   sudo apt install stow  # Ubuntu/Debian
+   sudo apt install stow  # optional preinstall if you prefer
    ```
 
 3. **Run the install script**:
@@ -23,6 +24,7 @@ Personal configuration files and setup scripts for a modern development environm
    chmod +x install
    ./install
    ```
+   The script installs missing essential packages, then stows selected configs.
 
 ## 📁 What's Included
 
@@ -91,7 +93,7 @@ cat ~/.ssh/id_ed25519.pub
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install required packages
-brew install stow zsh git
+brew install stow git zsh tmux fzf neovim lazygit
 ```
 
 #### Ubuntu/Debian
@@ -100,7 +102,7 @@ brew install stow zsh git
 sudo apt update && sudo apt upgrade
 
 # Install required packages
-sudo apt install stow zsh git curl
+sudo apt install stow git zsh tmux fzf neovim lazygit curl
 ```
 
 ### 3. Install Zsh Plugins and Theme
@@ -130,6 +132,7 @@ You can customize the installation by setting environment variables:
 ```bash
 export DOTFILES="/path/to/your/dotfiles"
 export STOW_FOLDERS="git,zsh,tmux,nvim"  # Choose which configs to install
+export INSTALL_PACKAGES=0  # Optional: skip package installs and only stow files
 ```
 
 ### Adding New Configurations

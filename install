@@ -7,6 +7,67 @@ set -e  # Exit on any error
 # Set default values if environment variables are not set
 DOTFILES="${DOTFILES:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 STOW_FOLDERS="${STOW_FOLDERS:-git,zsh,tmux,nvim}"
+# Set to 0 to skip package installation and only stow files.
+INSTALL_PACKAGES="${INSTALL_PACKAGES:-1}"
+# Essential packages for this dotfiles setup.
+ESSENTIAL_PACKAGES=(stow git zsh tmux fzf neovim lazygit)
+
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+trim() {
+    local s="$1"
+    s="${s#"${s%%[![:space:]]*}"}"
+    s="${s%"${s##*[![:space:]]}"}"
+    printf '%s' "$s"
+}
+
+package_is_installed() {
+    local package="$1"
+    case "$(uname -s)" in
+        Darwin)
+            brew list --versions "$package" >/dev/null 2>&1
+            ;;
+        Linux)
+            dpkg -s "$package" >/dev/null 2>&1
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+install_missing_packages() {
+    local missing=("$@")
+    if [ "${#missing[@]}" -eq 0 ]; then
+        echo "✓ All required packages already installed"
+        return
+    fi
+
+    echo "Installing missing packages: ${missing[*]}"
+    case "$(uname -s)" in
+        Darwin)
+            if ! command_exists brew; then
+                echo "✗ Homebrew not found. Install Homebrew first, then run ./install again."
+                exit 1
+            fi
+            brew install "${missing[@]}"
+            ;;
+        Linux)
+            if ! command_exists apt-get; then
+                echo "✗ Unsupported package manager. Please install these manually: ${missing[*]}"
+                exit 1
+            fi
+            sudo apt-get update
+            sudo apt-get install -y "${missing[@]}"
+            ;;
+        *)
+            echo "✗ Unsupported OS. Please install these manually: ${missing[*]}"
+            exit 1
+            ;;
+    esac
+}
 
 echo "Installing dotfiles from: $DOTFILES"
 echo "Stowing folders: $STOW_FOLDERS"
@@ -17,10 +78,25 @@ pushd "$DOTFILES" > /dev/null
 # Convert comma-separated string to array
 IFS=',' read -ra folders <<< "$STOW_FOLDERS"
 
+if [[ "$INSTALL_PACKAGES" == "1" ]]; then
+    missing_packages=()
+    for package in "${ESSENTIAL_PACKAGES[@]}"; do
+        if package_is_installed "$package"; then
+            echo "✓ $package already installed"
+        else
+            missing_packages+=("$package")
+        fi
+    done
+
+    install_missing_packages "${missing_packages[@]}"
+else
+    echo "Skipping package installation (INSTALL_PACKAGES=$INSTALL_PACKAGES)"
+fi
+
 # Stow each folder
 for folder in "${folders[@]}"; do
-    # Remove leading/trailing whitespace
-    folder=$(echo "$folder" | xargs)
+    folder="$(trim "$folder")"
+    [ -z "$folder" ] && continue
     
     if [ -d "$folder" ]; then
         echo "Stowing $folder..."
