@@ -7,7 +7,7 @@
     path = ~/.gitconfig-work
 
 [core]
-    editor = nvim
+    # editor = nvim
     autocrlf = input
 [push]
     default = current
@@ -25,4 +25,5 @@
     algorithm = histogram
     colorMoved = default
 [alias]
-    bclean = !git fetch --prune && git branch --merged | grep -Ev \"(^\\*|main|master|develop|release/)\" | xargs -r git branch -d
+    bclean = "!git fetch --prune && git branch --merged | grep -Ev \"(^\\*|main|master|develop|release/)\" | xargs -r git branch -d"
+    bcopy = "!git branch --show-current | pbcopy"
