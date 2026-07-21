@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# Update OS packages, zsh plugins (antidote), tmux plugins (tpm), and related tools.
+# Usage: dot-update
+
+set -u
+
+DOTFILES="${DOTFILES:-$HOME/.dotfiles}"
+failures=()
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+step() {
+  local name="$1"
+  shift
+  echo
+  echo "==> $name"
+  if "$@"; then
+    echo "✓ $name"
+  else
+    echo "✗ $name failed"
+    failures+=("$name")
+  fi
+}
+
+update_brew() {
+  brew update && brew upgrade && brew cleanup
+}
+
+update_apt() {
+  sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get autoremove -y
+}
+
+update_os_packages() {
+  case "$(uname -s)" in
+    Darwin)
+      if ! have brew; then
+        echo "Homebrew not installed (skipping)"
+        return 0
+      fi
+      update_brew
+      ;;
+    Linux)
+      if ! have apt-get; then
+        echo "apt-get not found (skipping)"
+        return 0
+      fi
+      update_apt
+      ;;
+    *)
+      echo "Unsupported OS: $(uname -s) (skipping package update)"
+      return 0
+      ;;
+  esac
+}
+
+update_antidote() {
+  # antidote is a zsh function; run in a clean zsh so it works from any shell.
+  zsh -c 'source "${HOME}/.antidote/antidote.zsh" && antidote update'
+}
+
+update_tpm() {
+  local tpm_update="${HOME}/.tmux/plugins/tpm/bin/update_plugins"
+  if [[ ! -x "$tpm_update" ]]; then
+    echo "TPM not found at ~/.tmux/plugins/tpm (skipping)"
+    return 0
+  fi
+  "$tpm_update" all
+}
+
+update_dotfiles() {
+  if [[ ! -d "${DOTFILES}/.git" ]]; then
+    echo "No git repo at ${DOTFILES} (skipping)"
+    return 0
+  fi
+  git -C "$DOTFILES" pull --ff-only
+}
+
+update_nvim_pack() {
+  # PackSync applies updates non-interactively (force) and drops inactive plugins.
+  nvim --headless "+PackSync" +qa
+}
+
+echo "dot-update starting…"
+
+step "OS packages" update_os_packages
+
+if [[ -r "${HOME}/.antidote/antidote.zsh" ]] && have zsh; then
+  step "Antidote (zsh plugins)" update_antidote
+else
+  echo
+  echo "==> Antidote (not found, skipping)"
+fi
+
+step "TPM (tmux plugins)" update_tpm
+
+if have nvim; then
+  step "Neovim (vim.pack)" update_nvim_pack
+else
+  echo
+  echo "==> Neovim (not installed, skipping)"
+fi
+
+step "Dotfiles repo" update_dotfiles
+
+echo
+if [[ ${#failures[@]} -eq 0 ]]; then
+  echo "All updates finished."
+  exit 0
+fi
+
+echo "Finished with failures: ${failures[*]}"
+exit 1

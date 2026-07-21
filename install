@@ -6,7 +6,7 @@ set -e  # Exit on any error
 
 # Set default values if environment variables are not set
 DOTFILES="${DOTFILES:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-STOW_FOLDERS="${STOW_FOLDERS:-git,zsh,tmux,nvim}"
+STOW_FOLDERS="${STOW_FOLDERS:-git,zsh,tmux,bin}"
 # Set to 0 to skip package installation and only stow files.
 INSTALL_PACKAGES="${INSTALL_PACKAGES:-1}"
 # Essential packages for this dotfiles setup.

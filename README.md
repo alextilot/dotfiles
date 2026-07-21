@@ -33,7 +33,7 @@ This dotfiles repository includes configurations for:
 - **Zsh**: Shell configuration with aliases, functions, and plugins
 - **Tmux**: Terminal multiplexer with custom key bindings and themes
 - **Git**: Global Git configuration and aliases
-- **Neovim**: Modern Vim configuration (kickstart.nvim based)
+- **Bin**: User scripts under `~/.local/bin` (e.g. `dot-update`)
 
 ## 🛠 Components
 
@@ -53,10 +53,13 @@ This dotfiles repository includes configurations for:
 - Global Git settings and aliases
 - Optimized for modern Git workflows
 
-### Neovim Configuration
-- Based on [kickstart.nvim](https://github.com/alextilot/kickstart.nvim)
-- Modern Lua configuration
-- LSP support and plugin ecosystem
+### Neovim (separate)
+Neovim config is **not** stowed from this repo. Install the editor via packages (`neovim` in `ESSENTIAL_PACKAGES`), then clone your kickstart fork:
+
+```bash
+git clone git@github.com:alextilot/kickstart.nvim.git ~/.config/nvim
+# or: https://github.com/alextilot/kickstart.nvim.git
+```
 
 ## 📋 Prerequisites
 
@@ -131,7 +134,7 @@ You can customize the installation by setting environment variables:
 
 ```bash
 export DOTFILES="/path/to/your/dotfiles"
-export STOW_FOLDERS="git,zsh,tmux,nvim"  # Choose which configs to install
+export STOW_FOLDERS="git,zsh,tmux,bin"  # Choose which configs to install
 export INSTALL_PACKAGES=0  # Optional: skip package installs and only stow files
 ```
 
@@ -143,11 +146,17 @@ export INSTALL_PACKAGES=0  # Optional: skip package installs and only stow files
 
 ## 🔄 Updating
 
-To update your dotfiles:
+Update OS packages (brew on macOS, apt on Linux), antidote (zsh plugins), TPM (tmux plugins), neovim vim.pack plugins, and pull this repo:
+
+```bash
+dot-update
+# or: dotupdate
+```
+
+After pulling config changes that need re-stowing:
 
 ```bash
 cd ~/.dotfiles
-git pull
 ./install
 ```
 
