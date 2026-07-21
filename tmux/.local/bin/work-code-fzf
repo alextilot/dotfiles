@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Open fzf over WORK_CODE_ROOT (default ~/work/code), then cd in the pane that invoked prefix+f.
+set -euo pipefail
+
+target_pane=${1:?pane id}
+ROOT="${WORK_CODE_ROOT:-$HOME/work/code}"
+
+cleanup() {
+	tmux kill-window
+}
+trap cleanup EXIT
+
+if command -v fd >/dev/null 2>&1; then
+	dir=$(fd --type d --min-depth 1 --max-depth 1 . "$ROOT" 2>/dev/null | fzf) || true
+else
+	dir=$(find "$ROOT" -mindepth 1 -maxdepth 1 -type d | fzf) || true
+fi
+
+[[ -z "${dir:-}" ]] && exit 0
+
+tmux send-keys -t "$target_pane" "cd $(printf %q "$dir")" Enter
