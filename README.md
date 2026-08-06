@@ -96,7 +96,7 @@ cat ~/.ssh/id_ed25519.pub
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install required packages
-brew install stow git zsh tmux fzf neovim lazygit
+brew install stow git zsh tmux fzf neovim lazygit tree-sitter-cli
 ```
 
 #### Ubuntu/Debian
@@ -104,19 +104,24 @@ brew install stow git zsh tmux fzf neovim lazygit
 # Update system
 sudo apt update && sudo apt upgrade
 
-# Install required packages
-sudo apt install stow git zsh tmux fzf neovim lazygit curl
+# Install required packages (build-essential provides the C compiler
+# tree-sitter-cli needs to build parsers for nvim-treesitter)
+sudo apt install stow git zsh tmux fzf neovim lazygit tree-sitter-cli curl build-essential
 ```
 
 ### 3. Install Zsh Plugins and Theme
 
-#### Install Antidote
-```bash
-git clone --depth=1 https://github.com/mattmc3/antidote.git ${ZDOTDIR:-~}/.antidote
-```
+`./install` clones these automatically (skip this step). To use a fork or a
+different location, set `ANTIDOTE_REPO`/`ANTIDOTE_DIR` or `TPM_REPO`/`TPM_DIR`
+before running `./install` (see [Customization](#-customization)).
 
-#### Install Tmux Plugin Manager
+If you need to install them manually instead:
+
 ```bash
+# Antidote (zsh plugin manager)
+git clone --depth=1 https://github.com/mattmc3/antidote.git ${ZDOTDIR:-~}/.antidote
+
+# TPM (tmux plugin manager)
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 ```
 
@@ -135,7 +140,13 @@ You can customize the installation by setting environment variables:
 ```bash
 export DOTFILES="/path/to/your/dotfiles"
 export STOW_FOLDERS="git,zsh,tmux,bin"  # Choose which configs to install
-export INSTALL_PACKAGES=0  # Optional: skip package installs and only stow files
+export INSTALL_PACKAGES=0  # Optional: skip package/plugin-manager installs and only stow files
+
+# Point at a fork or alternate location for the zsh/tmux plugin managers
+export ANTIDOTE_REPO="https://github.com/your-fork/antidote.git"
+export ANTIDOTE_DIR="$HOME/.antidote"
+export TPM_REPO="https://github.com/your-fork/tpm.git"
+export TPM_DIR="$HOME/.tmux/plugins/tpm"
 ```
 
 ### Adding New Configurations

@@ -101,8 +101,12 @@ export VISUAL='nvim'
 autoload -Uz compinit
 compinit
 
-source ~/.antidote/antidote.zsh
-antidote load
+if [[ -r "${ZDOTDIR:-$HOME}/.antidote/antidote.zsh" ]]; then
+  source "${ZDOTDIR:-$HOME}/.antidote/antidote.zsh"
+  antidote load
+else
+  echo "zsh: antidote not found (run ~/.dotfiles/install) — plugins skipped" >&2
+fi
 autoload -Uz promptinit && promptinit && prompt powerlevel10k
 
 # =========================================================

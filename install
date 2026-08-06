@@ -10,7 +10,19 @@ STOW_FOLDERS="${STOW_FOLDERS:-git,zsh,tmux,bin}"
 # Set to 0 to skip package installation and only stow files.
 INSTALL_PACKAGES="${INSTALL_PACKAGES:-1}"
 # Essential packages for this dotfiles setup.
-ESSENTIAL_PACKAGES=(stow git zsh tmux fzf neovim lazygit)
+# tree-sitter-cli: nvim-treesitter shells out to it (and a C compiler) to
+# build parsers; without it Neovim errors/crashes opening most filetypes.
+ESSENTIAL_PACKAGES=(stow git zsh tmux fzf neovim lazygit tree-sitter-cli)
+# Linux-only: macOS already has a C compiler via Xcode CLT (required by
+# Homebrew itself), so there's no equivalent brew package to add above.
+LINUX_ONLY_PACKAGES=(build-essential)
+
+# Plugin managers .zshrc / .tmux.conf expect on disk. Override the repo (e.g. a
+# fork) or install dir via env vars without editing this script.
+ANTIDOTE_DIR="${ANTIDOTE_DIR:-${ZDOTDIR:-$HOME}/.antidote}"
+ANTIDOTE_REPO="${ANTIDOTE_REPO:-https://github.com/mattmc3/antidote.git}"
+TPM_DIR="${TPM_DIR:-$HOME/.tmux/plugins/tpm}"
+TPM_REPO="${TPM_REPO:-https://github.com/tmux-plugins/tpm.git}"
 
 command_exists() {
     command -v "$1" >/dev/null 2>&1
@@ -36,6 +48,18 @@ package_is_installed() {
             return 1
             ;;
     esac
+}
+
+clone_if_missing() {
+    local dir="$1"
+    local repo="$2"
+    shift 2
+    if [ -d "$dir" ]; then
+        echo "✓ $(basename "$dir") already present at $dir"
+        return
+    fi
+    echo "Cloning $repo -> $dir"
+    git clone "$@" "$repo" "$dir"
 }
 
 install_missing_packages() {
@@ -79,8 +103,11 @@ pushd "$DOTFILES" > /dev/null
 IFS=',' read -ra folders <<< "$STOW_FOLDERS"
 
 if [[ "$INSTALL_PACKAGES" == "1" ]]; then
+    packages_to_check=("${ESSENTIAL_PACKAGES[@]}")
+    [[ "$(uname -s)" == "Linux" ]] && packages_to_check+=("${LINUX_ONLY_PACKAGES[@]}")
+
     missing_packages=()
-    for package in "${ESSENTIAL_PACKAGES[@]}"; do
+    for package in "${packages_to_check[@]}"; do
         if package_is_installed "$package"; then
             echo "✓ $package already installed"
         else
@@ -89,6 +116,9 @@ if [[ "$INSTALL_PACKAGES" == "1" ]]; then
     done
 
     install_missing_packages "${missing_packages[@]}"
+
+    clone_if_missing "$ANTIDOTE_DIR" "$ANTIDOTE_REPO" --depth=1
+    clone_if_missing "$TPM_DIR" "$TPM_REPO"
 else
     echo "Skipping package installation (INSTALL_PACKAGES=$INSTALL_PACKAGES)"
 fi
