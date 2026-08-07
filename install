@@ -123,6 +123,14 @@ else
     echo "Skipping package installation (INSTALL_PACKAGES=$INSTALL_PACKAGES)"
 fi
 
+# Linux has no equivalent of macOS's Homebrew shellenv to put ~/.local/bin
+# (dot-update, etc.) on PATH, so seed linux.local.zsh from the tracked
+# template the first time. Never overwrite an existing one.
+if [[ "$(uname -s)" == "Linux" && ! -f "$DOTFILES/zsh/linux.local.zsh" ]]; then
+    cp "$DOTFILES/zsh/linux.local.zsh.example" "$DOTFILES/zsh/linux.local.zsh"
+    echo "✓ Created zsh/linux.local.zsh from template"
+fi
+
 # Stow each folder
 for folder in "${folders[@]}"; do
     folder="$(trim "$folder")"
