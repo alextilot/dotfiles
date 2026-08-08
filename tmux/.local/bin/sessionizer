@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Fuzzy-pick a project dir, then create/switch a tmux session there.
+# Usage: sessionizer [path]
+#
+# Roots come from $SESSIONIZER_ROOTS or ~/.config/sessionizer/roots
+# Format per line: <label> <depth> <path>
+set -euo pipefail
+
+CONFIG="${SESSIONIZER_ROOTS:-${XDG_CONFIG_HOME:-$HOME/.config}/sessionizer/roots}"
+
+expand_path() {
+	local p=$1
+	[[ $p == ~* ]] && p="${p/#\~/$HOME}"
+	printf '%s' "$p"
+}
+
+list_projects() {
+	local label depth root dir rel display
+	[[ -r $CONFIG ]] || {
+		echo "sessionizer: missing config: $CONFIG" >&2
+		echo "Add lines like:  code  1  ~/work/code" >&2
+		exit 1
+	}
+
+	while read -r label depth root || [[ -n ${label:-} ]]; do
+		[[ -z ${label:-} || $label == \#* ]] && continue
+		root=$(expand_path "$root")
+		[[ -d $root ]] || continue
+
+		find "$root" -mindepth "$depth" -maxdepth "$depth" -type d -print 2>/dev/null |
+			while IFS= read -r dir; do
+				rel=${dir#"$root"/}
+				printf '%s\t%-4s %s\n' "$dir" "$label" "$rel"
+			done
+	done <"$CONFIG"
+}
+
+if [[ $# -eq 1 ]]; then
+	selected=$1
+else
+	selected=$(
+		list_projects | sort -t$'\t' -k2,2 |
+			fzf --prompt='project> ' --height=40% --reverse --border \
+				--delimiter=$'\t' --with-nth=2 \
+				--preview 'ls -la {1} 2>/dev/null | head -20' \
+				--preview-window=right:40%:wrap |
+			cut -f1
+	) || true
+fi
+
+[[ -z ${selected:-} ]] && exit 0
+
+# Prefer path relative to a configured root for the session name.
+selected_name=$(basename "$selected" | tr . _)
+if [[ -r $CONFIG ]]; then
+	while read -r _label depth root || [[ -n ${_label:-} ]]; do
+		[[ -z ${_label:-} || $_label == \#* ]] && continue
+		root=$(expand_path "$root")
+		case $selected in
+		"$root"/*)
+			rel=${selected#"$root"/}
+			if [[ $depth -gt 1 ]]; then
+				selected_name=$(printf '%s' "$rel" | tr . _)
+			else
+				selected_name=$(basename "$selected" | tr . _)
+			fi
+			break
+			;;
+		esac
+	done <"$CONFIG"
+fi
+
+if [[ -z ${TMUX:-} ]] && ! pgrep -x tmux >/dev/null 2>&1; then
+	exec tmux new-session -s "$selected_name" -c "$selected"
+fi
+
+if ! tmux has-session -t="=$selected_name" 2>/dev/null; then
+	tmux new-session -ds "$selected_name" -c "$selected"
+fi
+
+if [[ -n ${TMUX:-} ]]; then
+	tmux switch-client -t "$selected_name"
+else
+	exec tmux attach-session -t "$selected_name"
+fi

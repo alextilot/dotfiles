@@ -1,0 +1,12 @@
+# sessionizer roots — one entry per line:
+#   <label>  <depth>  <path>
+#
+# depth = find -mindepth 1 -maxdepth <depth> under path
+#   1 → immediate children (repos)
+#   2 → grandchildren (e.g. worktrees/<repo>/<ticket>)
+#
+# label = short prefix shown in the picker (code, wt, …)
+# path  = absolute or ~/…
+
+code  1  ~/work/code
+wt    2  ~/work/worktrees
