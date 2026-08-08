@@ -123,12 +123,18 @@ else
     echo "Skipping package installation (INSTALL_PACKAGES=$INSTALL_PACKAGES)"
 fi
 
-# Linux has no equivalent of macOS's Homebrew shellenv to put ~/.local/bin
-# (dot-update, etc.) on PATH, so seed linux.local.zsh from the tracked
-# template the first time. Never overwrite an existing one.
-if [[ "$(uname -s)" == "Linux" && ! -f "$DOTFILES/zsh/linux.local.zsh" ]]; then
-    cp "$DOTFILES/zsh/linux.local.zsh.example" "$DOTFILES/zsh/linux.local.zsh"
-    echo "✓ Created zsh/linux.local.zsh from template"
+# Remember which profile (work|personal) this machine is, so future shells
+# don't need DOTFILES_PROFILE re-exported. Never overwrite an existing file.
+if [[ -n "${DOTFILES_PROFILE:-}" && ! -f "$DOTFILES/zsh/profile.local.zsh" ]]; then
+    case "$DOTFILES_PROFILE" in
+        work|personal)
+            echo "export DOTFILES_PROFILE=$DOTFILES_PROFILE" > "$DOTFILES/zsh/profile.local.zsh"
+            echo "✓ Recorded DOTFILES_PROFILE=$DOTFILES_PROFILE in zsh/profile.local.zsh"
+            ;;
+        *)
+            echo "⚠ DOTFILES_PROFILE must be 'work' or 'personal', got '$DOTFILES_PROFILE' - skipping"
+            ;;
+    esac
 fi
 
 # Stow each folder

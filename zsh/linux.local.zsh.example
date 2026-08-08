@@ -1,6 +1,0 @@
-# Per-machine Linux config, sourced by .zshrc. Not tracked in git (see
-# .gitignore's `*.local.*`); `install` copies this template here once so
-# `~/.local/bin` (e.g. dot-update) lands on PATH out of the box. Edit freely
-# to add machine-specific config, mirroring darwin.local.zsh's role on macOS.
-
-export PATH="$HOME/.local/bin:$PATH"

@@ -5,18 +5,24 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Per-machine config (gitignored via repo root `*.local.*`). OS-specific so Linux
-# never sources macOS paths; use ${DOTFILES} if dotfiles live outside ~/.dotfiles.
-_zsh_local_dir="${DOTFILES:-$HOME/.dotfiles}/zsh"
+# OS + profile config, in order (use ${DOTFILES} if dotfiles live outside
+# ~/.dotfiles):
+#   1. profile.local.zsh   - gitignored, sets DOTFILES_PROFILE=work|personal
+#   2. $os.zsh             - tracked, shared across every machine on this OS
+#   3. $os.$PROFILE.zsh    - tracked, identity-specific (work-only/personal-only)
+#   4. $os.local.zsh       - gitignored escape hatch for a genuine one-off secret
+_zsh_dir="${DOTFILES:-$HOME/.dotfiles}/zsh"
 case "$(uname -s)" in
-  Darwin)
-    [[ -f "$_zsh_local_dir/darwin.local.zsh" ]] && source "$_zsh_local_dir/darwin.local.zsh"
-    ;;
-  Linux)
-    [[ -f "$_zsh_local_dir/linux.local.zsh" ]] && source "$_zsh_local_dir/linux.local.zsh"
-    ;;
+  Darwin) _zsh_os=darwin ;;
+  Linux)  _zsh_os=linux ;;
 esac
-unset _zsh_local_dir
+[[ -f "$_zsh_dir/profile.local.zsh" ]] && source "$_zsh_dir/profile.local.zsh"
+if [[ -n $_zsh_os ]]; then
+  [[ -f "$_zsh_dir/$_zsh_os.zsh" ]] && source "$_zsh_dir/$_zsh_os.zsh"
+  [[ -n $DOTFILES_PROFILE && -f "$_zsh_dir/$_zsh_os.$DOTFILES_PROFILE.zsh" ]] && source "$_zsh_dir/$_zsh_os.$DOTFILES_PROFILE.zsh"
+  [[ -f "$_zsh_dir/$_zsh_os.local.zsh" ]] && source "$_zsh_dir/$_zsh_os.local.zsh"
+fi
+unset _zsh_dir _zsh_os
 
 
 # Path to your oh-my-zsh installation.

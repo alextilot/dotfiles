@@ -149,6 +149,45 @@ export TPM_REPO="https://github.com/your-fork/tpm.git"
 export TPM_DIR="$HOME/.tmux/plugins/tpm"
 ```
 
+### Multiple Machines: Work vs Personal
+
+You can run this repo on as many machines as you like — work laptop, personal
+laptop, personal Linux box, whatever — without maintaining separate branches
+or forks. Two mechanisms handle the two kinds of "this is different on that
+machine" problem:
+
+**1. Self-adapting config (most things).** Files like [zsh/darwin.zsh](zsh/darwin.zsh)
+and [zsh/linux.zsh](zsh/linux.zsh) are tracked and shared across every machine
+on that OS. Anything that's only relevant on *some* machines (an optional
+tool, a corporate CA cert) is guarded by a `command -v` / `[[ -f ]]` / `[[ -d ]]`
+check, so the same file is simply a no-op where that tool/file doesn't exist.
+Prefer this — no flag to remember, nothing to keep in sync.
+
+**2. Explicit profile (things that genuinely differ by identity).** Set once
+per machine via a one-line, gitignored file:
+
+```bash
+DOTFILES_PROFILE=work ./install      # or: personal
+```
+
+This writes `zsh/profile.local.zsh` (gitignored — never committed), which
+`.zshrc` sources first on every shell startup. From there, `.zshrc` sources,
+in order:
+
+1. `zsh/profile.local.zsh` — sets `$DOTFILES_PROFILE`
+2. `zsh/<os>.zsh` — tracked, shared across every machine on that OS
+3. `zsh/<os>.<profile>.zsh` — tracked, e.g. `zsh/darwin.work.zsh` or
+   `zsh/linux.personal.zsh`; put non-secret, identity-only aliases/env here
+4. `zsh/<os>.local.zsh` — gitignored escape hatch, only for a genuine secret
+   that must never be public (rare — most things fit case 1 or 3 above)
+
+**Git identity** (author name/email) already has its own mechanism and needs
+no profile flag: [git/.gitconfig](git/.gitconfig) uses
+`includeIf "gitdir:~/work/"` to load `~/.gitconfig-work` for anything under
+`~/work/`, and `~/.gitconfig-personal` everywhere else. Neither of those
+files is tracked — create them once per machine with your `user.name`/
+`user.email`.
+
 ### Adding New Configurations
 1. Create a new directory in the dotfiles repo
 2. Add your configuration files
