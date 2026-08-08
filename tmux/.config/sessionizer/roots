@@ -7,6 +7,13 @@
 #
 # label = short prefix shown in the picker (code, wt, …)
 # path  = absolute or ~/…
+#
+# This file is tracked and shared across every machine — missing roots are
+# skipped, so it's safe to list both work and personal roots here as long as
+# the paths themselves aren't sensitive. For a root that's specific to your
+# work or personal machines (or a path you don't want in a public repo), set
+# $SESSIONIZER_ROOTS_EXTRA from zsh/darwin.work.zsh, darwin.personal.zsh, or
+# the gitignored darwin.local.zsh instead (same format, newline-separated).
 
 code  1  ~/work/code
 wt    2  ~/work/worktrees

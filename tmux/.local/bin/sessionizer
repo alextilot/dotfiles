@@ -2,7 +2,11 @@
 # Fuzzy-pick a project dir, then create/switch a tmux session there.
 # Usage: sessionizer [path]
 #
-# Roots come from $SESSIONIZER_ROOTS or ~/.config/sessionizer/roots
+# Roots come from $SESSIONIZER_ROOTS or ~/.config/sessionizer/roots (tracked,
+# shared across every machine), plus $SESSIONIZER_ROOTS_EXTRA if set - extra
+# newline-separated lines in the same format, meant to be exported from
+# zsh/darwin.work.zsh, darwin.personal.zsh, or the gitignored darwin.local.zsh
+# (same mechanism used for every other work/personal machine difference).
 # Format per line: <label> <depth> <path>
 set -euo pipefail
 
@@ -14,14 +18,19 @@ expand_path() {
 	printf '%s' "$p"
 }
 
-list_projects() {
-	local label depth root dir rel display
-	[[ -r $CONFIG ]] || {
-		echo "sessionizer: missing config: $CONFIG" >&2
-		echo "Add lines like:  code  1  ~/work/code" >&2
-		exit 1
-	}
+root_lines() {
+	# Nothing configured at all: fall back to browsing $HOME directly instead
+	# of erroring out.
+	if [[ ! -r $CONFIG && -z ${SESSIONIZER_ROOTS_EXTRA:-} ]]; then
+		printf '%s\n' "home 1 ~"
+		return
+	fi
+	[[ -r $CONFIG ]] && cat "$CONFIG"
+	[[ -n ${SESSIONIZER_ROOTS_EXTRA:-} ]] && printf '%s\n' "$SESSIONIZER_ROOTS_EXTRA"
+}
 
+list_projects() {
+	local label depth root dir rel
 	while read -r label depth root || [[ -n ${label:-} ]]; do
 		[[ -z ${label:-} || $label == \#* ]] && continue
 		root=$(expand_path "$root")
@@ -32,7 +41,7 @@ list_projects() {
 				rel=${dir#"$root"/}
 				printf '%s\t%-4s %s\n' "$dir" "$label" "$rel"
 			done
-	done <"$CONFIG"
+	done < <(root_lines)
 }
 
 if [[ $# -eq 1 ]]; then
@@ -52,23 +61,21 @@ fi
 
 # Prefer path relative to a configured root for the session name.
 selected_name=$(basename "$selected" | tr . _)
-if [[ -r $CONFIG ]]; then
-	while read -r _label depth root || [[ -n ${_label:-} ]]; do
-		[[ -z ${_label:-} || $_label == \#* ]] && continue
-		root=$(expand_path "$root")
-		case $selected in
-		"$root"/*)
-			rel=${selected#"$root"/}
-			if [[ $depth -gt 1 ]]; then
-				selected_name=$(printf '%s' "$rel" | tr . _)
-			else
-				selected_name=$(basename "$selected" | tr . _)
-			fi
-			break
-			;;
-		esac
-	done <"$CONFIG"
-fi
+while read -r _label depth root || [[ -n ${_label:-} ]]; do
+	[[ -z ${_label:-} || $_label == \#* ]] && continue
+	root=$(expand_path "$root")
+	case $selected in
+	"$root"/*)
+		rel=${selected#"$root"/}
+		if [[ $depth -gt 1 ]]; then
+			selected_name=$(printf '%s' "$rel" | tr . _)
+		else
+			selected_name=$(basename "$selected" | tr . _)
+		fi
+		break
+		;;
+	esac
+done < <(root_lines)
 
 if [[ -z ${TMUX:-} ]] && ! pgrep -x tmux >/dev/null 2>&1; then
 	exec tmux new-session -s "$selected_name" -c "$selected"
