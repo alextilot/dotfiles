@@ -197,16 +197,19 @@ fi
 for folder in "${folders[@]}"; do
     folder="$(trim "$folder")"
     [ -z "$folder" ] && continue
-    
     if [ -d "$folder" ]; then
         echo "Stowing $folder..."
-        stow -D "$folder" 2>/dev/null || true  # Remove existing symlinks, ignore errors
-        stow "$folder"
-        echo "✓ $folder stowed successfully"
+
+        stow -t ~ -D "$folder" 2>/dev/null || true 
+        # Fail forward by using '|| true' here prevents 'set -e' from killing the script on failure
+        stow -t ~ "$folder" || echo "❌ Failed to stow $folder, skipping..."
+
+        echo "✓ Finished processing $folder"
     else
         echo "⚠ Warning: Directory '$folder' not found, skipping..."
     fi
 done
+
 
 popd > /dev/null
 
