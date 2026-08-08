@@ -3,6 +3,6 @@
 # (work vs personal) config lives in linux.work.zsh / linux.personal.zsh
 # instead.
 
-# Linux has no equivalent of macOS's Homebrew shellenv to put ~/.local/bin
-# (dot-update, etc.) on PATH.
+# ~/.local/bin (dot-update, etc.) isn't put on PATH automatically by anything
+# on either OS - darwin.zsh has this same line for the same reason.
 export PATH="$HOME/.local/bin:$PATH"
