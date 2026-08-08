@@ -27,3 +27,6 @@
 [alias]
     bclean = "!git fetch --prune && git branch --merged | grep -Ev \"^\\*|^ *(main|master|develop)$|^ *release/\" | xargs -r git branch -d"
     bcopy = "!git-branch-copy"
+[user]
+	email = alextilot@gmail.com
+	name = alextilot
