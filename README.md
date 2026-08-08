@@ -106,7 +106,12 @@ sudo apt update && sudo apt upgrade
 
 # Install required packages (build-essential provides the C compiler
 # tree-sitter-cli needs to build parsers for nvim-treesitter)
-sudo apt install stow git zsh tmux fzf neovim lazygit tree-sitter-cli curl build-essential
+sudo apt install stow git zsh tmux fzf neovim tree-sitter-cli curl build-essential
+
+# lazygit only reached apt on Ubuntu 25.10+/Debian 13+; on older releases
+# (e.g. 24.04 LTS), install from the upstream binary release instead:
+# https://github.com/jesseduffield/lazygit#installation
+sudo apt install lazygit  # or use the upstream binary release above
 ```
 
 ### 3. Install Zsh Plugins and Theme

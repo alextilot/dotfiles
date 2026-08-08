@@ -10,9 +10,11 @@ STOW_FOLDERS="${STOW_FOLDERS:-git,zsh,tmux,bin}"
 # Set to 0 to skip package installation and only stow files.
 INSTALL_PACKAGES="${INSTALL_PACKAGES:-1}"
 # Essential packages for this dotfiles setup.
+# lazygit is handled separately (see ensure_lazygit): it only reached apt on
+# Ubuntu 25.10+/Debian 13+, so older LTS releases need the upstream binary.
 # tree-sitter-cli: nvim-treesitter shells out to it (and a C compiler) to
 # build parsers; without it Neovim errors/crashes opening most filetypes.
-ESSENTIAL_PACKAGES=(stow git zsh tmux fzf neovim lazygit tree-sitter-cli)
+ESSENTIAL_PACKAGES=(stow git zsh tmux fzf neovim tree-sitter-cli)
 # Linux-only: macOS already has a C compiler via Xcode CLT (required by
 # Homebrew itself), so there's no equivalent brew package to add above.
 LINUX_ONLY_PACKAGES=(build-essential)
@@ -60,6 +62,59 @@ clone_if_missing() {
     fi
     echo "Cloning $repo -> $dir"
     git clone "$@" "$repo" "$dir"
+}
+
+ensure_lazygit() {
+    if command_exists lazygit || package_is_installed lazygit; then
+        echo "✓ lazygit already installed"
+        return
+    fi
+
+    case "$(uname -s)" in
+        Darwin)
+            if ! command_exists brew; then
+                echo "✗ Homebrew not found. Install Homebrew first, then run ./install again."
+                exit 1
+            fi
+            brew install lazygit
+            ;;
+        Linux)
+            install_lazygit_linux
+            ;;
+        *)
+            echo "⚠ Unsupported OS for automatic lazygit install; see https://github.com/jesseduffield/lazygit#installation"
+            ;;
+    esac
+}
+
+# apt has lazygit only on Ubuntu 25.10+/Debian 13+; older releases (e.g. the
+# 24.04 LTS most people run) need the upstream release binary instead.
+install_lazygit_linux() {
+    if command_exists apt-get; then
+        sudo apt-get update
+        if sudo apt-get install -y lazygit 2>/dev/null; then
+            echo "✓ lazygit installed via apt"
+            return
+        fi
+        echo "lazygit not in apt on this release; fetching upstream binary instead"
+    fi
+
+    local version arch tmp_dir
+    version=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest |
+        sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' | head -n1)
+    if [ -z "$version" ]; then
+        echo "✗ Could not determine latest lazygit version. Install manually: https://github.com/jesseduffield/lazygit#installation"
+        return 1
+    fi
+    arch=$(uname -m | sed -e 's/aarch64/arm64/')
+    tmp_dir=$(mktemp -d)
+    curl -fsSL -o "$tmp_dir/lazygit.tar.gz" \
+        "https://github.com/jesseduffield/lazygit/releases/download/v${version}/lazygit_${version}_Linux_${arch}.tar.gz"
+    tar -xzf "$tmp_dir/lazygit.tar.gz" -C "$tmp_dir" lazygit
+    mkdir -p "$HOME/.local/bin"
+    install "$tmp_dir/lazygit" "$HOME/.local/bin/lazygit"
+    rm -rf "$tmp_dir"
+    echo "✓ lazygit $version installed to $HOME/.local/bin/lazygit"
 }
 
 install_missing_packages() {
@@ -116,6 +171,7 @@ if [[ "$INSTALL_PACKAGES" == "1" ]]; then
     done
 
     install_missing_packages "${missing_packages[@]}"
+    ensure_lazygit
 
     clone_if_missing "$ANTIDOTE_DIR" "$ANTIDOTE_REPO" --depth=1
     clone_if_missing "$TPM_DIR" "$TPM_REPO"
