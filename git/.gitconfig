@@ -30,3 +30,5 @@
 [user]
 	email = alextilot@gmail.com
 	name = alextilot
+[credential]
+	helper = store
