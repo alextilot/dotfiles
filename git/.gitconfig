@@ -1,11 +1,3 @@
-# Personal is the default — applies to every repo.
-[include]
-    path = ~/.gitconfig-personal
-
-# Work overrides personal inside ~/work/.
-[includeIf "gitdir:~/work/"]
-    path = ~/.gitconfig-work
-
 [core]
     # editor = nvim
     autocrlf = input
@@ -32,3 +24,11 @@
 	name = alextilot
 [credential]
 	helper = store
+
+# Personal is the default — applies to every repo.
+[include]
+    path = ~/.gitconfig-personal
+
+# Work overrides personal / default user inside ~/work/ (must load last).
+[includeIf "gitdir:~/work/"]
+    path = ~/.gitconfig-work
