@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Shorten a path to fit within a target width, left-to-right: truncate the
+# leftmost segments to their first character one at a time, only as many as
+# needed to fit, always keeping the last segment intact. If it's already
+# short enough, print it unchanged.
+# Usage: shorten-path <path> [terminal_width] [fraction_denom]
+#   shorten-path /home/atilot/programing/golang-htmx-chatapp 80 4
+#   -> allots 80/4 = 20 chars -> /h/a/p/golang-htmx-chatapp
+# terminal_width defaults to 30 (a plain max_len) when omitted, so it also
+# works as `shorten-path <path> <max_len>` on its own.
+# Used from tmux.conf via #(shorten-path #{pane_current_path} #{client_width}),
+# which re-runs (and re-adapts) on every status-line redraw, same as p10k
+# reading $COLUMNS on every prompt render.
+set -euo pipefail
+
+path=${1:-$PWD}
+width=${2:-30}
+denom=${3:-1}
+max=$((width / denom))
+[[ $max -lt 12 ]] && max=12
+
+IFS='/' read -ra parts <<< "$path"
+n=${#parts[@]}
+last=$((n - 1))
+
+join() {
+	local IFS='/'
+	printf '%s' "$*"
+}
+
+current=$(join "${parts[@]}")
+if [[ ${#current} -le $max ]]; then
+	printf '%s\n' "$current"
+	exit 0
+fi
+
+for ((i = 0; i < last; i++)); do
+	part=${parts[i]}
+	[[ -z $part ]] && continue
+	if [[ $part == .* ]]; then
+		parts[i]=".${part:1:1}"
+	else
+		parts[i]=${part:0:1}
+	fi
+	current=$(join "${parts[@]}")
+	[[ ${#current} -le $max ]] && break
+done
+
+printf '%s\n' "$current"
