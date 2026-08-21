@@ -115,6 +115,9 @@ else
 fi
 autoload -Uz promptinit && promptinit && prompt powerlevel10k
 
+# Lower from zsh's default of 40 (400ms) — fixes laggy Escape in vi-mode. Must be set after the plugin loads or it gets overwritten.
+export KEYTIMEOUT=1
+
 # =========================================================
 #
 # User configuration
@@ -144,6 +147,9 @@ DISABLE_AUTO_TITLE="true"
 #
 # Example aliases — source once at startup (not in precmd; that re-ran every prompt)
 [[ -f ~/.aliases.zsh ]] && source ~/.aliases.zsh
+
+# zoxide: smarter cd (replaces rupa/z). https://github.com/ajeetdsouza/zoxide
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
