@@ -151,5 +151,23 @@ DISABLE_AUTO_TITLE="true"
 # zoxide: smarter cd (replaces rupa/z). https://github.com/ajeetdsouza/zoxide
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 
+# fzf shell integration: Ctrl-T (fuzzy-insert a path) and Alt-C (cd via fuzzy
+# dir search) into the current shell. `fzf --zsh` (fzf >=0.48) is portable
+# across OS/package managers; older fzf (e.g. apt's 0.44) ships the same
+# scripts as files instead, at a location that differs by OS/package manager.
+if command -v fzf >/dev/null 2>&1; then
+  if _fzf_zsh=$(fzf --zsh 2>/dev/null); then
+    eval "$_fzf_zsh"
+  else
+    for _fzf_share in /usr/share/doc/fzf/examples /usr/share/fzf "$(brew --prefix fzf 2>/dev/null)/shell"; do
+      [[ -n $_fzf_share && -f "$_fzf_share/key-bindings.zsh" ]] || continue
+      source "$_fzf_share/key-bindings.zsh"
+      source "$_fzf_share/completion.zsh"
+      break
+    done
+  fi
+  unset _fzf_zsh _fzf_share
+fi
+
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
