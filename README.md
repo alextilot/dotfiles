@@ -96,7 +96,7 @@ cat ~/.ssh/id_ed25519.pub
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install required packages
-brew install stow git zsh tmux fzf neovim lazygit tree-sitter-cli
+brew install stow git zsh tmux fzf neovim lazygit tree-sitter-cli zoxide
 ```
 
 #### Ubuntu/Debian
@@ -106,7 +106,7 @@ sudo apt update && sudo apt upgrade
 
 # Install required packages (build-essential provides the C compiler
 # tree-sitter-cli needs to build parsers for nvim-treesitter)
-sudo apt install stow git zsh tmux fzf neovim tree-sitter-cli curl build-essential
+sudo apt install stow git zsh tmux fzf neovim tree-sitter-cli curl build-essential zoxide
 
 # lazygit only reached apt on Ubuntu 25.10+/Debian 13+; on older releases
 # (e.g. 24.04 LTS), install from the upstream binary release instead:

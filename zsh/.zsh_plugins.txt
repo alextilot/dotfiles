@@ -2,7 +2,6 @@
 
 # comments are supported like this
 Aloxaf/fzf-tab
-rupa/z
 
 # empty lines are skipped
 

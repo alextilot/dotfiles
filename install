@@ -14,7 +14,7 @@ INSTALL_PACKAGES="${INSTALL_PACKAGES:-1}"
 # Ubuntu 25.10+/Debian 13+, so older LTS releases need the upstream binary.
 # tree-sitter-cli: nvim-treesitter shells out to it (and a C compiler) to
 # build parsers; without it Neovim errors/crashes opening most filetypes.
-ESSENTIAL_PACKAGES=(stow git zsh tmux fzf neovim tree-sitter-cli)
+ESSENTIAL_PACKAGES=(stow git zsh tmux fzf neovim tree-sitter-cli zoxide)
 # Linux-only: macOS already has a C compiler via Xcode CLT (required by
 # Homebrew itself), so there's no equivalent brew package to add above.
 LINUX_ONLY_PACKAGES=(build-essential)
