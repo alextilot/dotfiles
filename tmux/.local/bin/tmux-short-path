@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Collapse a path to first letters of each directory when it exceeds MAX chars.
+# Last component stays full. $HOME becomes ~. Hidden dirs keep the leading dot
+# (".config" -> ".c").
+# Usage: tmux-short-path <path>
+set -eu
+
+MAX="${TMUX_SHORT_PATH_MAX:-40}"
+path="${1-}"
+
+if [[ $path == "$HOME"* ]]; then
+	path="~${path#"$HOME"}"
+fi
+
+if ((${#path} <= MAX)); then
+	printf '%s' "$path"
+	exit 0
+fi
+
+IFS=/ read -ra parts <<<"$path"
+n=${#parts[@]}
+out=()
+for i in "${!parts[@]}"; do
+	p="${parts[$i]}"
+	if [[ $i -eq $((n - 1)) || -z $p || $p == "~" ]]; then
+		out+=("$p")
+	elif [[ $p == .* ]]; then
+		out+=("${p:0:2}")
+	else
+		out+=("${p:0:1}")
+	fi
+done
+
+IFS=/
+printf '%s' "${out[*]}"
