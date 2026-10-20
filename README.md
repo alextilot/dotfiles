@@ -190,10 +190,9 @@ in order:
    that must never be public (rare — most things fit case 1 or 3 above)
 
 **Git identity** (author name/email) already has its own mechanism and needs
-no profile flag: [git/.gitconfig](git/.gitconfig) uses
-`includeIf "gitdir:~/work/"` to load `~/.gitconfig-work` for anything under
-`~/work/`, and `~/.gitconfig-personal` everywhere else. Neither of those
-files is tracked — create them once per machine with your `user.name`/
+no profile flag. [git/.gitconfig](git/.gitconfig) includes the personal and
+work files; the `gitdir` lines there are the list of directories. Neither
+included file is tracked — create them once per machine with your `user.name`/
 `user.email`.
 
 ### Adding New Configurations
