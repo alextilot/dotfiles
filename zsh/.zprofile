@@ -29,9 +29,19 @@ if [[ -n ${_nvm_target:-} ]]; then
   done
   _nvm_ver=${_nvm_target#v}
   _nvm_bin="$NVM_DIR/versions/node/v${_nvm_ver}/bin"
+  # An alias can name a version that isn't installed: nvm rewrites its cached
+  # lts/* chain the day a new LTS ships, long before that version is downloaded
+  # here. Prefer the newest install sharing the major, then the newest of any
+  # major — no node at all is the worse failure.
+  # (N) yields nothing instead of erroring; (n) sorts numerically, newest last.
+  if [[ ! -d $_nvm_bin ]]; then
+    _nvm_alts=("$NVM_DIR/versions/node/v${_nvm_ver%%.*}".*/bin(Nn))
+    (( $#_nvm_alts )) || _nvm_alts=("$NVM_DIR"/versions/node/v*/bin(Nn))
+    _nvm_bin=${_nvm_alts[-1]:-$_nvm_bin}
+  fi
   [[ -d $_nvm_bin ]] && path=("$_nvm_bin" $path)
 fi
-unset _nvm_target _nvm_ver _nvm_bin _nvm_i
+unset _nvm_target _nvm_ver _nvm_bin _nvm_i _nvm_alts
 
 # jenv: put selected JDK on PATH without `jenv init` (agents / login).
 # Interactive `jenv` is lazy-loaded in darwin.zsh.
