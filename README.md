@@ -2,6 +2,8 @@
 
 Personal configuration files and setup scripts for a modern development environment.
 
+Agents: [AGENTS.md](AGENTS.md) is the map of which file owns a change.
+
 ## 🚀 Quick Start
 
 1. **Clone the repository**:
@@ -161,12 +163,13 @@ laptop, personal Linux box, whatever — without maintaining separate branches
 or forks. Two mechanisms handle the two kinds of "this is different on that
 machine" problem:
 
-**1. Self-adapting config (most things).** Files like [zsh/darwin.zsh](zsh/darwin.zsh)
-and [zsh/linux.zsh](zsh/linux.zsh) are tracked and shared across every machine
-on that OS. Anything that's only relevant on *some* machines (an optional
-tool, a corporate CA cert) is guarded by a `command -v` / `[[ -f ]]` / `[[ -d ]]`
-check, so the same file is simply a no-op where that tool/file doesn't exist.
-Prefer this — no flag to remember, nothing to keep in sync.
+**1. Self-adapting config (most things).** Files like [zsh/.darwin.zsh](zsh/.darwin.zsh)
+and [zsh/.linux.zsh](zsh/.linux.zsh) are tracked and shared across every machine
+on that OS. WSL is Linux: it loads `.linux.zsh`. Anything that's only relevant
+on *some* machines (an optional tool, a corporate CA cert) is guarded by a
+`command -v` / `[[ -f ]]` / `[[ -d ]]` check, so the same file is simply a no-op
+where that tool/file doesn't exist. Prefer this — no flag to remember, nothing
+to keep in sync.
 
 **2. Explicit profile (things that genuinely differ by identity).** Set once
 per machine via a one-line, gitignored file:
@@ -179,11 +182,11 @@ This writes `zsh/profile.local.zsh` (gitignored — never committed), which
 `.zshrc` sources first on every shell startup. From there, `.zshrc` sources,
 in order:
 
-1. `zsh/profile.local.zsh` — sets `$DOTFILES_PROFILE`
-2. `zsh/<os>.zsh` — tracked, shared across every machine on that OS
-3. `zsh/<os>.<profile>.zsh` — tracked, e.g. `zsh/darwin.work.zsh` or
-   `zsh/linux.personal.zsh`; put non-secret, identity-only aliases/env here
-4. `zsh/<os>.local.zsh` — gitignored escape hatch, only for a genuine secret
+1. `zsh/profile.local.zsh` — sets `$DOTFILES_PROFILE` (no leading dot; this is the name `./install` writes)
+2. `zsh/.<os>.zsh` — tracked, shared across every machine on that OS, e.g. `zsh/.darwin.zsh` or `zsh/.linux.zsh`
+3. `zsh/.<os>.<profile>.zsh` — tracked, e.g. `zsh/.darwin.work.zsh` or
+   `zsh/.linux.personal.zsh`; put non-secret, identity-only aliases/env here
+4. `zsh/.<os>.local.zsh` — gitignored escape hatch, only for a genuine secret
    that must never be public (rare — most things fit case 1 or 3 above)
 
 **Git identity** (author name/email) already has its own mechanism and needs
