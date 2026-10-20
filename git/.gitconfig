@@ -23,8 +23,6 @@
 [user]
 	email = alextilot@gmail.com
 	name = alextilot
-[credential]
-	helper = store
 
 # Personal is the default — applies to every repo.
 [include]
@@ -35,9 +33,7 @@
     path = ~/.gitconfig-work
 [includeIf "gitdir:~/dev/"]
     path = ~/.gitconfig-work
-[credential "https://github.com"]
-	helper = 
-	helper = !/opt/homebrew/bin/gh auth git-credential
-[credential "https://gist.github.com"]
-	helper = 
-	helper = !/opt/homebrew/bin/gh auth git-credential
+
+# Per machine type, so this file stays free of host-specific helpers.
+[include]
+    path = ~/.gitconfig.os

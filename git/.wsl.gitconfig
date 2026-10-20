@@ -1,0 +1,3 @@
+# Until this OS has its own helper.
+[credential]
+	helper = store

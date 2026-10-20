@@ -148,6 +148,43 @@ install_missing_packages() {
     esac
 }
 
+# Shared gitconfig includes ~/.gitconfig.os. Select the file for this OS.
+link_git_os() {
+    local os target link
+    case "$(uname -s)" in
+        Darwin) os=darwin ;;
+        Linux)
+            if [[ -n ${WSL_DISTRO_NAME:-}${WSL_INTEROP:-} ]] || grep -qi microsoft /proc/version 2>/dev/null; then
+                os=wsl
+            else
+                os=linux
+            fi
+            ;;
+        *)
+            echo "⚠ Unsupported OS for git config; skipping"
+            return
+            ;;
+    esac
+
+    target="$DOTFILES/git/.$os.gitconfig"
+    link="$HOME/.gitconfig.os"
+    if [[ ! -f $target ]]; then
+        echo "⚠ No git config file at $target"
+        return
+    fi
+    if [[ -e $link && ! -L $link ]]; then
+        echo "⚠ $link exists and is not a symlink; leaving it"
+        return
+    fi
+    ln -sfn "$target" "$link"
+    echo "✓ Linked git config ($os)"
+}
+
+if [[ "${1:-}" == "--link-git-os" ]]; then
+    link_git_os
+    exit 0
+fi
+
 echo "Installing dotfiles from: $DOTFILES"
 echo "Stowing folders: $STOW_FOLDERS"
 
@@ -192,6 +229,8 @@ if [[ -n "${DOTFILES_PROFILE:-}" && ! -f "$DOTFILES/zsh/profile.local.zsh" ]]; t
             ;;
     esac
 fi
+
+link_git_os
 
 # Stow each folder
 for folder in "${folders[@]}"; do

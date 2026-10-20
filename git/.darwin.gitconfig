@@ -1,0 +1,11 @@
+[credential]
+	helper = store
+
+# Blank value clears inherited helpers so only the next line runs.
+# Git does not always have Homebrew on PATH.
+[credential "https://github.com"]
+	helper = 
+	helper = "!sh -c 'for g in /opt/homebrew/bin/gh /usr/local/bin/gh; do [ -x \"$g\" ] && exec \"$g\" auth git-credential; done; exec gh auth git-credential'"
+[credential "https://gist.github.com"]
+	helper = 
+	helper = "!sh -c 'for g in /opt/homebrew/bin/gh /usr/local/bin/gh; do [ -x \"$g\" ] && exec \"$g\" auth git-credential; done; exec gh auth git-credential'"

@@ -193,7 +193,8 @@ in order:
 no profile flag. [git/.gitconfig](git/.gitconfig) includes the personal and
 work files; the `gitdir` lines there are the list of directories. Neither
 included file is tracked — create them once per machine with your `user.name`/
-`user.email`.
+`user.email`. Per-OS git config sits beside that file. `./install` links
+`~/.gitconfig.os`, and `dot-update` refreshes the link after it pulls.
 
 ### Adding New Configurations
 1. Create a new directory in the dotfiles repo

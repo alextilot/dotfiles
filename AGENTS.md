@@ -28,6 +28,7 @@ Done when the edit is in the file for that scope, and every new shared line has 
 | Which profile this machine is | `DOTFILES_PROFILE=work\|personal ./install` writes `zsh/profile.local.zsh` |
 | Git on every host | `git/.gitconfig` |
 | Git author name and email | include paths in `git/.gitconfig`; the included files are untracked |
+| Git config for this machine type | `git/.darwin.gitconfig`, `git/.linux.gitconfig`, or `git/.wsl.gitconfig`. `./install` links `~/.gitconfig.os`; `dot-update` refreshes that link after pull |
 | Tmux on every host | `tmux/.tmux.conf` |
 | Script on `PATH` | `bin/.local/bin/<name>` |
 | Tmux helper script | `tmux/.local/bin/` |

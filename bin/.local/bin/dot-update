@@ -75,6 +75,7 @@ update_dotfiles() {
     return 0
   fi
   git -C "$DOTFILES" pull --ff-only
+  "$DOTFILES/install" --link-git-os
 }
 
 update_nvim_pack() {
