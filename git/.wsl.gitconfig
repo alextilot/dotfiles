@@ -1,3 +1,12 @@
-# Until this OS has its own helper.
+# Git Credential Manager from Git for Windows (Windows Credential Manager).
+# Falls back to an in-memory cache when GCM is not installed.
 [credential]
-	helper = store
+	helper = "!sh -c 'gcm=\"/mnt/c/Program Files/Git/mingw64/bin/git-credential-manager.exe\"; if [ -x \"$gcm\" ]; then exec \"$gcm\" \"$@\"; fi; exec git credential-cache --timeout=3600 \"$@\"' gcm-helper"
+
+# Blank value clears inherited helpers so only the next line runs.
+[credential "https://github.com"]
+	helper = 
+	helper = "!sh -c 'for g in /usr/bin/gh /usr/local/bin/gh /home/linuxbrew/.linuxbrew/bin/gh; do [ -x \"$g\" ] && exec \"$g\" auth git-credential \"$@\"; done; exec gh auth git-credential \"$@\"' gh-helper"
+[credential "https://gist.github.com"]
+	helper = 
+	helper = "!sh -c 'for g in /usr/bin/gh /usr/local/bin/gh /home/linuxbrew/.linuxbrew/bin/gh; do [ -x \"$g\" ] && exec \"$g\" auth git-credential \"$@\"; done; exec gh auth git-credential \"$@\"' gh-helper"
