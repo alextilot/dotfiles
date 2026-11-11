@@ -63,6 +63,16 @@ git clone git@github.com:alextilot/kickstart.nvim.git ~/.config/nvim
 # or: https://github.com/alextilot/kickstart.nvim.git
 ```
 
+### Raspberry Pi dev box
+`bootstrap-pi` rebuilds the Pi 5 (Debian 12 bookworm, arm64) from a fresh OS install. It installs what bookworm's apt lacks or ships too old (Neovim, tree-sitter CLI 0.25.x, lazygit, Go, nvm + Node, uv, gh, Docker), Claude Code, and Tailscale. It turns on unattended security upgrades, runs `./install` to stow the configs, and enables a `claude-remote` service so the Claude app can always start sessions on the Pi. It is safe to re-run.
+
+```bash
+git clone https://github.com/alextilot/dotfiles.git ~/.dotfiles
+~/.dotfiles/bootstrap-pi
+```
+
+The browser logins it can't do (`gh auth login`, `claude`, `sudo tailscale up`) are listed at the top of the script.
+
 ## 📋 Prerequisites
 
 ### Required

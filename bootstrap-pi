@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+# Rebuild the Raspberry Pi dev box (Debian 12 bookworm, arm64) from scratch.
+#
+#   git clone https://github.com/alextilot/dotfiles.git ~/.dotfiles
+#   ~/.dotfiles/bootstrap-pi
+#
+# Installs what `./install` can't get from bookworm's apt (it is too old or
+# missing there), then runs `./install` with INSTALL_PACKAGES=0 to stow the
+# configs. Every step checks first, so re-running it is safe.
+#
+# Still manual afterwards (each needs a browser login):
+#   gh auth login            GitHub CLI + upload ~/.ssh/id_ed25519.pub
+#   claude                   sign in to Claude Code
+#   sudo tailscale up        join the tailnet, then disable key expiry
+#   systemctl --user restart claude-remote   once claude is signed in
+
+set -euo pipefail
+
+DOTFILES="${DOTFILES:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+DOTFILES_PROFILE="${DOTFILES_PROFILE:-personal}"
+# nvim-treesitter supports tree-sitter-cli up to 0.25.x, and 0.26+ release
+# binaries need glibc 2.39 (bookworm ships 2.36).
+TREE_SITTER_VERSION="${TREE_SITTER_VERSION:-0.25.10}"
+KICKSTART_REPO="${KICKSTART_REPO:-https://github.com/alextilot/kickstart.nvim.git}"
+REMOTE_CONTROL_DIR="${REMOTE_CONTROL_DIR:-$HOME/dev}"
+REMOTE_CONTROL_NAME="${REMOTE_CONTROL_NAME:-pi}"
+
+APT_PACKAGES=(stow git zsh tmux fzf zoxide build-essential curl unzip rsync
+    ripgrep fd-find python3-venv python3-pip python3-dev unattended-upgrades)
+
+# Upstream release asset names below are the arm64 ones; other arches name
+# them differently (x86_64, x64, amd64), so refuse rather than guess.
+ARCH="$(dpkg --print-architecture)"
+if [[ $ARCH != arm64 ]]; then
+    echo "✗ bootstrap-pi targets arm64 (Raspberry Pi); this machine is $ARCH." >&2
+    exit 1
+fi
+export PATH="$HOME/.local/bin:/usr/local/go/bin:$PATH"
+
+have() { command -v "$1" >/dev/null 2>&1; }
+step() { printf '\n==> %s\n' "$*"; }
+ok() { printf '✓ %s\n' "$*"; }
+gh_latest() {
+    curl -fsSL "https://api.github.com/repos/$1/releases/latest" |
+        sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -n1
+}
+
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+step "apt packages"
+sudo apt-get update -qq
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "${APT_PACKAGES[@]}" >/dev/null
+ok "${APT_PACKAGES[*]}"
+
+step "GitHub CLI (cli.github.com apt repo)"
+if have gh; then ok "gh already installed"; else
+    sudo mkdir -p -m 755 /etc/apt/keyrings
+    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg |
+        sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg >/dev/null
+    sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+    echo "deb [arch=$ARCH signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" |
+        sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
+    sudo apt-get update -qq && sudo apt-get install -y -qq gh >/dev/null
+    ok "gh installed"
+fi
+
+step "Docker"
+if have docker; then ok "docker already installed"; else
+    curl -fsSL https://get.docker.com | sudo sh >/dev/null
+    ok "docker installed"
+fi
+id -nG "$USER" | grep -qw docker || { sudo usermod -aG docker "$USER"; ok "added $USER to docker group (re-login to apply)"; }
+
+step "Neovim (upstream; bookworm apt has 0.7)"
+if [[ -x /opt/nvim/bin/nvim ]]; then ok "nvim already in /opt/nvim"; else
+    curl -fsSL -o "$TMP/nvim.tgz" "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-$ARCH.tar.gz"
+    sudo mkdir -p /opt/nvim && sudo tar -xzf "$TMP/nvim.tgz" -C /opt/nvim --strip-components=1
+    sudo ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim
+    ok "$(nvim --version | head -n1)"
+fi
+
+step "tree-sitter CLI $TREE_SITTER_VERSION (not in bookworm apt)"
+if have tree-sitter && tree-sitter --version | grep -q "$TREE_SITTER_VERSION"; then ok "tree-sitter $TREE_SITTER_VERSION already installed"; else
+    curl -fsSL -o "$TMP/ts.gz" "https://github.com/tree-sitter/tree-sitter/releases/download/v$TREE_SITTER_VERSION/tree-sitter-linux-$ARCH.gz"
+    gunzip "$TMP/ts.gz" && sudo install "$TMP/ts" /usr/local/bin/tree-sitter
+    ok "$(tree-sitter --version)"
+fi
+
+step "lazygit (not in bookworm apt)"
+if have lazygit; then ok "lazygit already installed"; else
+    v="$(gh_latest jesseduffield/lazygit)"; v="${v#v}"
+    curl -fsSL -o "$TMP/lg.tgz" "https://github.com/jesseduffield/lazygit/releases/download/v$v/lazygit_${v}_Linux_${ARCH}.tar.gz"
+    tar -xzf "$TMP/lg.tgz" -C "$TMP" lazygit && sudo install "$TMP/lazygit" /usr/local/bin/lazygit
+    ok "lazygit $v"
+fi
+
+step "Go (go.dev; .linux.personal.zsh puts /usr/local/go/bin on PATH)"
+if [[ -x /usr/local/go/bin/go ]]; then ok "$(/usr/local/go/bin/go version)"; else
+    v="$(curl -fsSL 'https://go.dev/VERSION?m=text' | head -n1)"
+    curl -fsSL -o "$TMP/go.tgz" "https://go.dev/dl/$v.linux-$ARCH.tar.gz"
+    sudo tar -C /usr/local -xzf "$TMP/go.tgz"
+    ok "$v"
+fi
+
+step "nvm + Node LTS (.zprofile puts the default on PATH)"
+export NVM_DIR="$HOME/.nvm"
+if [[ -s $NVM_DIR/nvm.sh ]]; then ok "nvm already installed"; else
+    curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/$(gh_latest nvm-sh/nvm)/install.sh" | PROFILE=/dev/null bash >/dev/null
+fi
+set +u; . "$NVM_DIR/nvm.sh"
+[[ -f $NVM_DIR/alias/default ]] || { nvm install --lts >/dev/null && nvm alias default 'lts/*' >/dev/null; }
+ok "node $(nvm version default)"; set -u
+
+step "uv (Python versions + tools)"
+if have uv; then ok "$(uv --version)"; else
+    curl -LsSf https://astral.sh/uv/install.sh | env UV_NO_MODIFY_PATH=1 sh >/dev/null
+    ok "$(uv --version)"
+fi
+
+step "Claude Code (native install; updates itself)"
+if have claude; then ok "claude $(claude --version)"; else
+    curl -fsSL https://claude.ai/install.sh | bash >/dev/null
+    ok "claude installed"
+fi
+
+step "Tailscale"
+if have tailscale; then ok "tailscale already installed"; else
+    curl -fsSL https://tailscale.com/install.sh | sh >/dev/null
+    ok "tailscale installed"
+fi
+sudo tailscale set --auto-update=true 2>/dev/null && ok "tailscale auto-update on" ||
+    echo "⚠ run 'sudo tailscale up', then re-run this to turn on tailscale auto-update"
+
+step "Unattended security upgrades"
+printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\nAPT::Periodic::AutocleanInterval "7";\n' |
+    sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null
+sudo systemctl enable --now unattended-upgrades >/dev/null 2>&1
+ok "Debian security updates install daily (no automatic reboot)"
+
+step "Shell plugin managers + dotfiles"
+[[ -d $HOME/.antidote ]] || git clone -q --depth=1 https://github.com/mattmc3/antidote.git "$HOME/.antidote"
+[[ -d $HOME/.tmux/plugins/tpm ]] || git clone -q https://github.com/tmux-plugins/tpm.git "$HOME/.tmux/plugins/tpm"
+DOTFILES_PROFILE="$DOTFILES_PROFILE" INSTALL_PACKAGES=0 "$DOTFILES/install" | grep -E '✓|❌|⚠|complete' || true
+[[ -d $HOME/.config/nvim ]] || git clone -q "$KICKSTART_REPO" "$HOME/.config/nvim"
+"$HOME/.tmux/plugins/tpm/bin/install_plugins" >/dev/null 2>&1 || true
+if [[ "$(getent passwd "$USER" | cut -d: -f7)" != */zsh ]]; then
+    sudo chsh -s "$(command -v zsh)" "$USER" && ok "default shell is now zsh"
+fi
+[[ -f $HOME/.ssh/id_ed25519 ]] || { ssh-keygen -t ed25519 -N "" -C "$USER@$(hostname)" -f "$HOME/.ssh/id_ed25519" -q; ok "generated ~/.ssh/id_ed25519"; }
+
+step "Claude Remote Control service (always available in the Claude app)"
+mkdir -p "$REMOTE_CONTROL_DIR" "$HOME/.config/systemd/user"
+cat > "$HOME/.config/systemd/user/claude-remote.service" <<EOF
+[Unit]
+Description=Claude Code Remote Control (server mode in $REMOTE_CONTROL_DIR)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=$REMOTE_CONTROL_DIR
+# Go + user bins; the zsh login shell (.zprofile) adds the nvm default Node.
+Environment=PATH=%h/.local/bin:/usr/local/go/bin:%h/go/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/zsh -lc "exec claude remote-control --name $REMOTE_CONTROL_NAME"
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=default.target
+EOF
+sudo loginctl enable-linger "$USER"
+systemctl --user daemon-reload
+systemctl --user enable claude-remote.service >/dev/null 2>&1
+ok "claude-remote enabled; it serves $REMOTE_CONTROL_DIR once claude is signed in"
+
+printf '\n🎉 Pi bootstrap complete. Remaining browser logins are listed at the top of this script.\n'

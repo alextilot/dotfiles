@@ -36,6 +36,7 @@ Done when the edit is in the file for that scope, and every new shared line has 
 | Zsh plugins | `zsh/.zsh_plugins.txt` |
 | Package both package managers install | shared package list in `install` |
 | Package one OS installs | `uname` branch in `install` |
+| Raspberry Pi dev box (Debian 12, arm64): tools bookworm's apt lacks or has too old, and its services | `bootstrap-pi` |
 
 Login shells read `zsh/.zprofile` and can skip `zsh/.zshrc`. `PATH` those shells must see goes in `.zprofile`, still guarded, because every OS sources it. Interactive-only setup goes in the OS file.
 
