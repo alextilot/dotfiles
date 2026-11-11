@@ -15,7 +15,6 @@
 # $SESSIONIZER_ROOTS_EXTRA from zsh/darwin.work.zsh, darwin.personal.zsh, or
 # the gitignored darwin.local.zsh instead (same format, newline-separated).
 
-code  1  ~/work/code
-wt    2  ~/work/worktrees
 repos 1  ~/dev/repos
 tasks 2  ~/dev/tasks
+reviews 2 ~/dev/reviews
