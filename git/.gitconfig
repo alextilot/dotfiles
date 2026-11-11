@@ -29,8 +29,6 @@
     path = ~/.gitconfig-personal
 
 # After the personal include so work identity wins.
-[includeIf "gitdir:~/work/"]
-    path = ~/.gitconfig-work
 [includeIf "gitdir:~/dev/"]
     path = ~/.gitconfig-work
 
