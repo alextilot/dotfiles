@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+#
+# prepare-commit-msg — inject branch ticket keys into the commit subject.
+#
+# CONFIG (edit below) vs BEHAVIOR (functions further down):
+#   Config chooses whether to run and how to find keys.
+#   Behavior: Conventional Commits subject → keys after the colon;
+#             anything else → prepend keys.
+#
+
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+
+# Comment out this line to disable ticket injection.
+INJECT_TICKET_FROM_BRANCH=1
+
+# Ticket-shaped keys only (CTY-1234), not title fragments like node-20.
+TICKET_KEY_REGEX='[A-Za-z]{2,}[-_][0-9]+'
+
+# Conventional Commits first line: type, optional (scope), optional !, colon.
+CONVENTIONAL_SUBJECT_REGEX='^[A-Za-z]+(\([^)]+\))?(!)?:[[:space:]]'
+
+# ---------------------------------------------------------------------------
+# Behavior
+# ---------------------------------------------------------------------------
+
+normalize_key() {
+  echo "$1" | tr '[:lower:]' '[:upper:]' | tr '_' '-'
+}
+
+has_key() {
+  local needle="$1"
+  shift
+  local k
+  for k in "$@"; do
+    [[ "$k" == "$needle" ]] && return 0
+  done
+  return 1
+}
+
+write_message() {
+  local subject="$1"
+  local rest="$2"
+  if [[ -n "$rest" ]]; then
+    printf '%s\n%s' "$subject" "$rest" > "$MESSAGE_FILE"
+  else
+    printf '%s\n' "$subject" > "$MESSAGE_FILE"
+  fi
+}
+
+keys_from_branch() {
+  local raw key
+  branch_keys=()
+  while IFS= read -r raw; do
+    [[ -z "$raw" ]] && continue
+    key=$(normalize_key "$raw")
+    if ! has_key "$key" "${branch_keys[@]+"${branch_keys[@]}"}"; then
+      branch_keys+=("$key")
+    fi
+  done < <(echo "$BRANCH" | grep -Eo "$TICKET_KEY_REGEX" || true)
+}
+
+is_conventional_subject() {
+  echo "$1" | grep -Eq "$CONVENTIONAL_SUBJECT_REGEX"
+}
+
+already_prepended() {
+  echo "$1" | grep -Eq "^\[?${branch_keys[0]}\]?[: ]"
+}
+
+# "feat: add CSV export" → "feat: CTY-1234 add CSV export"
+inject_after_colon() {
+  local prefix rest key
+  local leading_keys=()
+  local merged=()
+
+  prefix=$(printf '%s\n' "$1" | sed -E 's/^([A-Za-z]+(\([^)]+\))?(!)?:).*/\1/')
+  rest=$(printf '%s\n' "$1" | sed -E 's/^[A-Za-z]+(\([^)]+\))?(!)?:[[:space:]]*//')
+
+  while echo "$rest" | grep -Eq "^${TICKET_KEY_REGEX}[[:space:]]"; do
+    leading_keys+=("$(normalize_key "$(printf '%s\n' "$rest" | grep -Eo "^${TICKET_KEY_REGEX}")")")
+    rest=$(printf '%s\n' "$rest" | sed -E "s/^${TICKET_KEY_REGEX}[[:space:]]+//")
+  done
+  if echo "$rest" | grep -Eq "^${TICKET_KEY_REGEX}$"; then
+    leading_keys+=("$(normalize_key "$rest")")
+    rest=""
+  fi
+
+  for key in "${branch_keys[@]}"; do
+    merged+=("$key")
+  done
+  for key in "${leading_keys[@]+"${leading_keys[@]}"}"; do
+    if ! has_key "$key" "${merged[@]+"${merged[@]}"}"; then
+      merged+=("$key")
+    fi
+  done
+
+  rest="${rest#"${rest%%[![:space:]]*}"}"
+  if [[ -n "$rest" ]]; then
+    echo "${prefix} ${merged[*]} ${rest}"
+  else
+    echo "${prefix} ${merged[*]}"
+  fi
+}
+
+# "add CSV export" → "CTY-1234 add CSV export"
+prepend_keys() {
+  echo "${branch_keys[*]} $1"
+}
+
+inject_ticket_from_branch() {
+  MESSAGE_FILE="$1"
+  local commit_source="$2"
+  local message first body
+
+  [[ "$commit_source" == "merge" || "$commit_source" == "squash" ]] && return 0
+
+  BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || return 0
+  [[ "$BRANCH" == "HEAD" ]] && return 0
+  # Trunk branches carry no ticket; stay quiet there (personal repos).
+  [[ "$BRANCH" =~ ^(main|master|develop|trunk)$ ]] && return 0
+
+  message=$(cat "$MESSAGE_FILE")
+  case "$message" in
+    fixup!*|squash!*|amend!*) return 0 ;;
+  esac
+
+  keys_from_branch
+  if [[ ${#branch_keys[@]} -eq 0 ]]; then
+    echo "⚠️  No ticket found in branch '$BRANCH' — commit subject will not be rewritten." >&2
+    echo "   Expected format: <type>/<TICKET-###>/<title>" >&2
+    return 0
+  fi
+
+  first=$(printf '%s\n' "$message" | head -n 1)
+  body=$(printf '%s\n' "$message" | tail -n +2)
+
+  if is_conventional_subject "$first"; then
+    write_message "$(inject_after_colon "$first")" "$body"
+    return 0
+  fi
+
+  already_prepended "$first" && return 0
+  write_message "$(prepend_keys "$first")" "$body"
+}
+
+# ---------------------------------------------------------------------------
+# Run
+# ---------------------------------------------------------------------------
+
+# No AI attribution: drop Co-Authored-By / session / "Generated with" lines
+# that agent tools add (Claude, Cursor, Copilot, Codex, Gemini).
+strip_ai_attribution() {
+  local tmp
+  tmp=$(mktemp) || return 0
+  grep -viE '^(co-authored-by:.*(claude|anthropic|cursor|copilot|codex|gemini|openai)|claude-session:|.*generated with \[?(claude|cursor))' "$1" > "$tmp"
+  cat "$tmp" > "$1"
+  rm -f "$tmp"
+}
+strip_ai_attribution "$1"
+
+[[ -n "${INJECT_TICKET_FROM_BRANCH:-}" ]] && inject_ticket_from_branch "$1" "$2"
+exit 0

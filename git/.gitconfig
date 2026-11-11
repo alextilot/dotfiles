@@ -1,6 +1,9 @@
 [core]
     # editor = nvim
     autocrlf = input
+    # Shared hooks, tracked in this repo. A repo that sets its own
+    # core.hooksPath (husky) still wins.
+    hooksPath = ~/.git-templates/hooks
 [push]
     default = current
 	autoSetupRemote = true
