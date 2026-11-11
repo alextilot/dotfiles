@@ -65,14 +65,16 @@ fi
 
 # Java (jenv): JDK already on PATH via ~/.zprofile.
 # Lazy-load full jenv only when the `jenv` command is used.
-export PATH="$HOME/.jenv/bin:$PATH"
-jenv() {
-  unset -f jenv
-  eval "$(command jenv init -)"
-  jenv "$@"
-}
+if [[ -d $HOME/.jenv/bin ]]; then
+  export PATH="$HOME/.jenv/bin:$PATH"
+  jenv() {
+    unset -f jenv
+    eval "$(command jenv init -)"
+    jenv "$@"
+  }
+fi
 
-# Cursor (AI Agent)
+# User scripts from bin/ (dot-update, git-branch-copy) and tool CLIs.
 export PATH="$HOME/.local/bin:$PATH"
 
 # External display stuck black / missing from Displays settings after sleep.
