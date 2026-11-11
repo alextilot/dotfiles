@@ -15,7 +15,7 @@
 # Comment out this line to disable ticket injection.
 INJECT_TICKET_FROM_BRANCH=1
 
-# Ticket-shaped keys only (CTY-1234), not title fragments like node-20.
+# Ticket-shaped keys (CTY-1234). key_segments keeps title words out.
 TICKET_KEY_REGEX='[A-Za-z]{2,}[-_][0-9]+'
 
 # Conventional Commits first line: type, optional (scope), optional !, colon.
@@ -49,6 +49,20 @@ write_message() {
   fi
 }
 
+# type/KEY[/KEY…]/title → only the KEY segments. The title can hold
+# key-shaped words (node-22, gitpython-3) that are not tickets.
+# Fewer than three segments → search the whole branch, uppercase keys only,
+# so experiment/node-20 gives no key but feature/CTY-42-title gives CTY-42.
+key_segments() {
+  local IFS=/
+  local parts=($BRANCH)
+  if (( ${#parts[@]} >= 3 )); then
+    echo "${parts[*]:1:${#parts[@]}-2}"
+  else
+    echo "$BRANCH" | grep -Eo '[A-Z]{2,}-[0-9]+'
+  fi
+}
+
 keys_from_branch() {
   local raw key
   branch_keys=()
@@ -58,7 +72,7 @@ keys_from_branch() {
     if ! has_key "$key" "${branch_keys[@]+"${branch_keys[@]}"}"; then
       branch_keys+=("$key")
     fi
-  done < <(echo "$BRANCH" | grep -Eo "$TICKET_KEY_REGEX" || true)
+  done < <(key_segments | grep -Eo "$TICKET_KEY_REGEX" || true)
 }
 
 is_conventional_subject() {
