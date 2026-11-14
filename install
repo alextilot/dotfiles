@@ -6,7 +6,7 @@ set -e  # Exit on any error
 
 # Set default values if environment variables are not set
 DOTFILES="${DOTFILES:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-STOW_FOLDERS="${STOW_FOLDERS:-git,zsh,tmux,bin}"
+STOW_FOLDERS="${STOW_FOLDERS:-git,zsh,tmux,bin,agents}"
 # Set to 0 to skip package installation and only stow files.
 INSTALL_PACKAGES="${INSTALL_PACKAGES:-1}"
 # Essential packages for this dotfiles setup.
@@ -180,6 +180,28 @@ link_git_os() {
     echo "✓ Linked git config ($os)"
 }
 
+# Agents read the shared coding style (agents/) from their own global file.
+# Claude Code imports it with an @ line; append the line once, never rewrite the file.
+link_agent_style() {
+    local style="$HOME/.config/agents/coding-style.md"
+    local claude="$HOME/.claude/CLAUDE.md"
+    local line="@~/.config/agents/coding-style.md"
+    if [[ ! -f $style ]]; then
+        echo "⚠ No coding style at $style; skipping agent link"
+        return
+    fi
+    if [[ ! -d $HOME/.claude ]]; then
+        echo "Claude Code not set up; skipping coding style import"
+        return
+    fi
+    if [[ -f $claude ]] && grep -qxF "$line" "$claude"; then
+        echo "✓ Claude Code already imports the coding style"
+        return
+    fi
+    printf '\n# Coding style (from ~/.dotfiles/agents)\n\n%s\n' "$line" >> "$claude"
+    echo "✓ Claude Code now imports the coding style"
+}
+
 if [[ "${1:-}" == "--link-git-os" ]]; then
     link_git_os
     exit 0
@@ -249,6 +271,8 @@ for folder in "${folders[@]}"; do
     fi
 done
 
+
+link_agent_style
 
 popd > /dev/null
 

@@ -36,6 +36,7 @@ This dotfiles repository includes configurations for:
 - **Tmux**: Terminal multiplexer with custom key bindings and themes
 - **Git**: Global Git configuration and aliases
 - **Bin**: User scripts under `~/.local/bin` (e.g. `dot-update`)
+- **Agents**: the coding style every coding agent follows, `~/.config/agents/coding-style.md`
 
 ## 🛠 Components
 
