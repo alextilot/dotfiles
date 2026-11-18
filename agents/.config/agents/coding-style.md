@@ -39,7 +39,6 @@ function setWidth(profile: Profile, raw: string): boolean {
 
 ## Naming
 
-- Prefer mathematical terms where they fit: sequence, constant, parameter, constraint, objective. Plainer words are for user-facing text.
 - Use the project's glossary when it has one, in code as well as docs.
 
 ## Unavailable information
