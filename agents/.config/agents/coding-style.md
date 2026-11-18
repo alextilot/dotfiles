@@ -39,6 +39,7 @@ function setWidth(profile: Profile, raw: string): boolean {
 
 ## Naming
 
+- Prefer the most semantic name: the word that says what a thing is in its domain, over a generic or technical one, such as "key overlay" rather than "map".
 - Use the project's glossary when it has one, in code as well as docs.
 
 ## Unavailable information
